@@ -1,0 +1,48 @@
+.tile {
+    position: relative;
+    width: var(--tile-size-l);
+    height: var(--tile-size-l);
+    // width: var(--tile-size-m);
+    // height: var(--tile-size-m);
+    background: var(--tile-primary-color);
+    border: solid 4px;
+    border-color: white var(--tile-secondary-color) var(--tile-secondary-color) white;
+    outline: none;
+    padding: 0;
+    cursor: pointer;
+
+    &:hover::before {
+        content: '';
+        width: calc(var(--tile-size-l));
+        height: calc(var(--tile-size-l));
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        background-color: black;
+        opacity: 10%;
+    }
+
+    &:active {
+        background: white;
+    }
+
+    img {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+.shown {
+    border: 2px solid var(--tile-secondary-color);
+    border-bottom: none;
+    border-right: none; 
+
+    &:hover::before {
+        top: -2px;
+        left: -2px;
+    }
+
+    // &.mine {
+
+    // }
+}

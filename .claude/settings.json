@@ -1,0 +1,61 @@
+{
+    "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "theme": "dark",
+    "language": "russian",
+    "agent": "code-reviewer",
+    "cleanupPeriodDays": 30,
+    "autoUpdatesChannel": "stable",
+    "alwaysThinkingEnabled": true,
+    "showThinkingSummaries": true,
+    "viewMode": "default",
+    "tui": "fullscreen",
+    "awaySummaryEnabled": false,
+    "includeGitInstructions": true,
+    "defaultShell": "bash",
+    "effortLevel": "high",
+    "spinnerTipsEnabled": true,
+    "enableAllProjectMcpServers": true,
+    "sandbox": {
+        "enabled": true,
+        "autoAllowBashIfSandboxed": true,
+        "network": {
+            "allowedDomains": ["github.com", "*.npmjs.org", "registry.yarnpkg.com"]
+        },
+        "excludedCommands": ["docker", "git"]
+    },
+    "permissions": {
+        "allow": [
+            "Edit(*)",
+            "Write(*)",
+            "Bash(npm run *)",
+            "Bash(git *)",
+            "WebFetch(domain:*)",
+            "Bash(git status)",
+            "Bash(git diff *)",
+            "Bash(git log *)",
+            "Bash(git branch *)"
+        ],
+        "ask": [
+            "Bash(rm *)",
+            "Bash(git push *)",
+            "Bash(wget *)"
+        ],
+        "deny": [
+            "Read(.env)",
+            "Read(./secrets/**)",
+            "Bash(curl *)"
+        ],
+        "additionalDirectories": [],
+        "defaultMode": "acceptEdits"
+    },
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "mcpServers": {
+        "filesystem": {
+            "command": "mcp-server-filesystem",
+            "args": ["/Users/maksim_chuprin/Desktop/Computer/Projects/portfolio/minesweeper"]
+        }
+    },
+    "enabledMcpjsonServers": ["memory", "github", "filesystem", "figma", "fetch", "memory", "thinking", "puppeteer"]
+}
