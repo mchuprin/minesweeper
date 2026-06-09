@@ -1,0 +1,4 @@
+.small {
+    display: grid;
+    grid-template: repeat(9, var(--tile-size-l)) / repeat(9, var(--tile-size-l));
+}

@@ -12,7 +12,7 @@ export interface GameConfig {
 
 export type GameConfigState = {
     difficulty: Difficulty,
-    field: TileValueType[][]
+    field: TileValueType[]
     changeDifficulty: (newDif: Difficulty) => void
     generateField: () => void
 }

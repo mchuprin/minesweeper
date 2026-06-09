@@ -17,7 +17,7 @@ export const useGameConfig = create<GameConfigState>((set, get) => ({
         const indexArray = Array.from({ length: config.cols * config.rows }, (_, index) => index)
         let currentIndex = indexArray.length - 1
 
-        while (currentIndex != 0) {
+        while (currentIndex > 0) {
             let randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
 
@@ -32,7 +32,7 @@ export const useGameConfig = create<GameConfigState>((set, get) => ({
         // Этап 3 - Вычисляем количество мин вокруг каждой не мины
         for (let row = 0; row < config.rows; row++) {
             for (let col = 0; col < config.cols; col++) {
-                if (generatedField[row][col] === TileValue.MINE) return
+                if (generatedField[row][col] === TileValue.MINE) continue
                 let mineCount = 0
                 // #Тот же уровень
                 // Слева
@@ -62,7 +62,6 @@ export const useGameConfig = create<GameConfigState>((set, get) => ({
                 generatedField[row][col] = TileValueByMineCount[mineCount]
             }
         }
-
-        set({ field: generatedField })
+        return set({ field: generatedField.flat() })
     }
 }))

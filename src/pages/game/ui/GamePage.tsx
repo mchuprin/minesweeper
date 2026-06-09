@@ -1,8 +1,7 @@
-import { TileValue, TileValueByMineCount } from '../../../shared/constants';
+import { useEffect } from 'react';
 import { classNames } from '../../../shared/lib/classNames/classNames';
 import { useGameConfig } from '../../../shared/store';
 import { MineTile } from '../../../shared/ui/tile/MineTile';
-import { DIFFICULTY_CONFIG } from '../constants';
 import styles from './GamePage.module.scss';
 
 interface GameProps {
@@ -15,14 +14,15 @@ export const GamePage = (props: GameProps) => {
 
     // При useEffect должна быть генерация поля, но условием, что она должна быть только один раз (сохранять генерация и открытые поля в localStorage)
 
+    useEffect(() => generateField(), [])
     // Event нажатия на tile
     const onClickTile = () => {
-        generateField()
+        // generateField()
     }
 
     return (
         <div className={classNames(styles.field, {}, [styles[diffculty]])}>
-            <MineTile value={TileValue.MINE} onClick={onClickTile} />
+            { field.map((value) => <MineTile value={value} onClick={onClickTile} />) }
         </div>
     )
 };
