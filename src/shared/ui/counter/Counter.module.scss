@@ -1,0 +1,8 @@
+.counter {
+	display: flex;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--digit-bg, #ffffff);
+	border: 2px solid var(--tile-secondary-color, #818181);
+	border-radius: 4px;
+}

@@ -1,0 +1,79 @@
+.digit {
+	position: relative;
+	width: 22px;
+	height: 42px;
+	background: var(--digit-bg, #ffffff);
+}
+
+.segment {
+	position: absolute;
+
+	&.on {
+		background: var(--digit-color, #fc0d1b);
+	}
+
+	&.off {
+		background: repeating-conic-gradient(
+			var(--digit-color, #fc0d1b) 0% 25%,
+			transparent 0% 50%
+		);
+		background-size: 4px 4px;
+		opacity: 0.5;
+	}
+}
+
+.top {
+	top: 0;
+	left: 4px;
+	width: 14px;
+	height: 4px;
+	border-radius: 0 0 2px 2px;
+}
+
+.topRight {
+	top: 4px;
+	right: 0;
+	width: 4px;
+	height: 15px;
+	border-radius: 0 0 2px 2px;
+}
+
+.bottomRight {
+	bottom: 4px;
+	right: 0;
+	width: 4px;
+	height: 15px;
+	border-radius: 2px 2px 0 0;
+}
+
+.bottom {
+	bottom: 0;
+	left: 4px;
+	width: 14px;
+	height: 4px;
+	border-radius: 2px 2px 0 0;
+}
+
+.bottomLeft {
+	bottom: 4px;
+	left: 0;
+	width: 4px;
+	height: 15px;
+	border-radius: 2px 2px 0 0;
+}
+
+.topLeft {
+	top: 4px;
+	left: 0;
+	width: 4px;
+	height: 15px;
+	border-radius: 0 0 2px 2px;
+}
+
+.centre {
+	top: 19px;
+	left: 4px;
+	width: 14px;
+	height: 4px;
+	border-radius: 2px;
+}

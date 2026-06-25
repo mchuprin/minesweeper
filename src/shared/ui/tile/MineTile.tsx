@@ -1,37 +1,38 @@
-import { useState } from 'react';
-import { TileAssetsUrl, TileValue, type TileValueType } from '../../constants';
+import { TileAssetsUrl, TileValue } from '../../constants';
 import { classNames } from '../../lib/classNames/classNames';
+import type { TileData, TileValueType } from '../../types';
 import styles from './MineTile.module.scss';
 
 interface MineTileProps {
-    value: TileValueType,
-    onClick: () => void
+	data: TileData;
+	index: number;
+	onClick: () => void;
 }
 
-const TileStatus = {
-    
-} as const
+export const MineTile = ({ data, onClick }: MineTileProps) => {
+	const mods = {
+		[styles.shown]: data.shown,
+		[styles.exploded]: data.exploded,
+		[styles.wrongFlag]: data.wrongFlag,
+	};
 
-export const MineTile = ({ value, onClick }: MineTileProps) => {
-    const [ shown, setShown ] = useState(false);
-    const [ flagged, setFlag ] = useState(false);
-
-    const onClickTile = () => {
-        setShown(true)
-        onClick()
-    }
-
-    const mods = {
-        [styles.shown]: shown,
-        // [styles.mine]: 
-    }
-
-
-    
-    return (
-        <button className={classNames(styles.tile, { ...mods }, [])} onClick={onClickTile} >
-            { flagged && !shown ? <img src="" alt="" /> : '' }
-            { shown ? <img src={TileAssetsUrl[value as Exclude<TileValueType, typeof TileValue.EMPTY>]} alt="" /> : "" }
-        </button>
-    );
+	return (
+		<button type="button" className={classNames(styles.tile, { ...mods }, [])} onClick={onClick}>
+			{data.wrongFlag && <span className={styles.wrongFlagLine} />}
+			{data.flagged && !data.shown && !data.wrongFlag && <img src={TileAssetsUrl.flag} alt="" />}
+			{data.shown && (
+				<img
+					src={
+						TileAssetsUrl[
+							data.value as Exclude<
+								TileValueType,
+								typeof TileValue.EMPTY | typeof TileValue.WRONG_FLAG
+							>
+						]
+					}
+					alt=""
+				/>
+			)}
+		</button>
+	);
 };

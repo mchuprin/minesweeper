@@ -5,8 +5,6 @@
     justify-content: center;
     width: var(--tile-size-l);
     height: var(--tile-size-l);
-    // width: var(--tile-size-m);
-    // height: var(--tile-size-m);
     background: var(--tile-primary-color);
     border: solid 4px;
     border-color: white var(--tile-secondary-color) var(--tile-secondary-color) white;
@@ -38,14 +36,31 @@
 .shown {
     border: 2px solid var(--tile-secondary-color);
     border-bottom: none;
-    border-right: none; 
+    border-right: none;
 
     &:hover::before {
         top: -2px;
         left: -2px;
     }
+}
 
-    // &.mine {
+.exploded {
+    background: #fc0d1b;
+    border-color: #fc0d1b;
+}
 
-    // }
+.wrongFlag {
+    position: relative;
+}
+
+.wrongFlagLine {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 2px;
+    background: #fc0d1b;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    pointer-events: none;
+    z-index: 1;
 }
