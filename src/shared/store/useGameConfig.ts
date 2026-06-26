@@ -1,30 +1,142 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DIFFICULTY, DIFFICULTY_CONFIG } from '../../pages/game/constants';
-import { ClickMode, TileValue, TileValueByMineCount } from '../constants';
-import type { GameConfigState, TileData } from '../types';
+import {
+	ClickMode,
+	GameStatus,
+	TileValue,
+	TileValueByMineCount,
+	TILE_NUMBER_MAP,
+	DIFFICULTY,
+	DIFFICULTY_CONFIG,
+} from '@shared/constants';
+import { getNeighbors } from '@shared/lib/getNeighbors';
+import type { GameConfigState, TileData } from '@shared/types';
+
+function checkWin(field: TileData[]): boolean {
+	return field.every((tile) => tile.shown || tile.value === TileValue.MINE);
+}
+
+function floodFill(field: TileData[], index: number, cols: number, rows: number): TileData[] {
+	const newField = [...field];
+	const queue = [index];
+
+	while (queue.length > 0) {
+		const current = queue.shift()!;
+		if (newField[current].shown || newField[current].flagged) continue;
+
+		newField[current] = { ...newField[current], shown: true };
+
+		if (newField[current].value === TileValue.EMPTY) {
+			const neighbors = getNeighbors(current, cols, rows);
+			for (const ni of neighbors) {
+				if (!newField[ni].shown && !newField[ni].flagged) {
+					queue.push(ni);
+				}
+			}
+		}
+	}
+
+	return newField;
+}
 
 export const useGameConfig = create<GameConfigState>()(
 	persist(
 		(set, get) => ({
-			clickMode: 'flag',
+			clickMode: ClickMode.SHOW,
 			toggleMode: () => {
 				const { clickMode, gameStatus } = get();
-				if (gameStatus === 'lost') return;
+				if (gameStatus === GameStatus.LOST || gameStatus === GameStatus.WON) return;
 				const newValue = clickMode === ClickMode.FLAG ? ClickMode.SHOW : ClickMode.FLAG;
 				set({ clickMode: newValue });
 			},
 			difficulty: DIFFICULTY.SMALL,
-			gameStatus: 'idle',
+			gameStatus: GameStatus.IDLE,
 			field: [],
-			checkTile: () => {
-				// Пустой - открыть все вокруг него и
+			startTime: null,
+			firstClickIndex: null,
+
+			getElapsedTime: () => {
+				const { startTime } = get();
+				if (startTime === null) return 0;
+				return Math.min(Math.floor((Date.now() - startTime) / 1000), 999);
 			},
-			changeDifficulty: (newDif) => set({ difficulty: newDif }),
+
+			reset: () => {
+				const config = DIFFICULTY_CONFIG[get().difficulty];
+				const totalTiles = config.cols * config.rows;
+				const emptyField: TileData[] = Array.from({ length: totalTiles }, () => ({
+					value: TileValue.EMPTY,
+					flagged: false,
+					shown: false,
+				}));
+				set({
+					clickMode: ClickMode.SHOW,
+					gameStatus: GameStatus.IDLE,
+					field: emptyField,
+					startTime: null,
+					firstClickIndex: null,
+				});
+			},
+
+			changeDifficulty: (newDif) => {
+				set({ difficulty: newDif });
+				get().generateField();
+			},
+
+			checkTile: (index: number) => {
+				const { field, gameStatus } = get();
+				if (gameStatus !== GameStatus.PLAYING) return;
+
+				const tile = field[index];
+				if (!tile.shown || tile.value === TileValue.MINE || tile.value === TileValue.EMPTY) return;
+
+				const config = DIFFICULTY_CONFIG[get().difficulty];
+				const neighbors = getNeighbors(index, config.cols, config.rows);
+				const flaggedCount = neighbors.filter((ni) => field[ni].flagged).length;
+				const numberValue = TILE_NUMBER_MAP[tile.value];
+
+				if (flaggedCount !== numberValue) return;
+
+				let newField = [...field];
+				for (const ni of neighbors) {
+					const neighborTile = newField[ni];
+					if (neighborTile.shown || neighborTile.flagged) continue;
+
+					if (neighborTile.value === TileValue.MINE) {
+						newField[ni] = { ...neighborTile, shown: true, exploded: true };
+						for (let i = 0; i < newField.length; i++) {
+							const t = newField[i];
+							if (t.value === TileValue.MINE && i !== ni) {
+								newField[i] = { ...t, shown: true };
+							}
+							if (t.flagged && t.value !== TileValue.MINE) {
+								newField[i] = { ...t, wrongFlag: true };
+							}
+						}
+						set({ field: newField, gameStatus: GameStatus.LOST });
+						return;
+					}
+
+					if (neighborTile.value === TileValue.EMPTY) {
+						newField = floodFill(newField, ni, config.cols, config.rows);
+					} else {
+						newField[ni] = { ...neighborTile, shown: true };
+					}
+				}
+
+				if (checkWin(newField)) {
+					set({ field: newField, gameStatus: GameStatus.WON });
+				} else {
+					set({ field: newField });
+				}
+			},
+
 			toggleTile: (index: number) => {
 				const { field, clickMode, gameStatus } = get();
-				if (gameStatus === 'lost') return;
 
+				if (gameStatus === GameStatus.LOST || gameStatus === GameStatus.WON) return;
+
+				const config = DIFFICULTY_CONFIG[get().difficulty];
 				const newField = [...field];
 				const tile = newField[index];
 
@@ -33,7 +145,6 @@ export const useGameConfig = create<GameConfigState>()(
 
 					if (tile.value === TileValue.MINE) {
 						newField[index] = { ...tile, shown: true, exploded: true };
-
 						for (let i = 0; i < newField.length; i++) {
 							const t = newField[i];
 							if (t.value === TileValue.MINE && i !== index) {
@@ -43,189 +154,109 @@ export const useGameConfig = create<GameConfigState>()(
 								newField[i] = { ...t, wrongFlag: true };
 							}
 						}
-
-						set({ field: newField, gameStatus: 'lost' });
+						set({ field: newField, gameStatus: GameStatus.LOST });
 						return;
 					}
 
-					newField[index] = { ...tile, shown: true };
-
 					if (tile.value === TileValue.EMPTY) {
-						const config = DIFFICULTY_CONFIG[get().difficulty];
-
-						const currentCoords = {
-							col: index % config.rows,
-							row: Math.floor(index / config.cols),
-						};
-						// Тот же уровень
-						// Слева
-						if (
-							currentCoords.col - 1 >= 0 &&
-							!newField[index - 1].shown &&
-							!newField[index - 1].flagged
-						) {
-							newField[index - 1] = { ...newField[index - 1], shown: true };
+						const updatedField = floodFill(newField, index, config.cols, config.rows);
+						if (checkWin(updatedField)) {
+							set({ field: updatedField, gameStatus: GameStatus.WON });
+						} else {
+							set({
+								field: updatedField,
+								gameStatus: GameStatus.PLAYING,
+								startTime: get().startTime ?? Date.now(),
+							});
 						}
-						// Справа
-						if (
-							currentCoords.col + 1 < config.cols &&
-							!newField[index + 1].shown &&
-							!newField[index + 1].flagged
-						) {
-							newField[index + 1] = { ...newField[index + 1], shown: true };
-						}
-						// Сверху
-						if (currentCoords.row - 1 >= 0) {
-							if (
-								currentCoords.col - 1 >= 0 &&
-								!newField[index - 10].shown &&
-								!newField[index - 10].flagged
-							) {
-								newField[index - 10] = { ...newField[index - 10], shown: true };
-							}
-							// Справа
-							if (
-								currentCoords.col + 1 < config.cols &&
-								!newField[index - 8].shown &&
-								!newField[index - 8].flagged
-							) {
-								newField[index - 8] = { ...newField[index - 8], shown: true };
-							}
-							// Центр
-							if (!newField[index - 9].shown && !newField[index - 9].flagged) {
-								newField[index - 9] = { ...newField[index - 9], shown: true };
-							}
-						}
-
-						// Снизу
-						if (currentCoords.row + 1 < config.rows) {
-							// Слева
-							if (
-								currentCoords.col - 1 >= 0 &&
-								!newField[index + 8].shown &&
-								!newField[index + 8].flagged
-							) {
-								newField[index + 8] = { ...newField[index + 8], shown: true };
-							}
-							// Справа
-							if (
-								currentCoords.col + 1 < config.cols &&
-								!newField[index + 10].shown &&
-								!newField[index + 10].flagged
-							) {
-								newField[index + 10] = { ...newField[index + 10], shown: true };
-							}
-							// Центр
-							if (!newField[index + 9].shown && !newField[index + 9].flagged) {
-								newField[index + 9] = { ...newField[index + 9], shown: true };
-							}
+					} else {
+						newField[index] = { ...tile, shown: true };
+						if (checkWin(newField)) {
+							set({ field: newField, gameStatus: GameStatus.WON });
+						} else {
+							set({
+								field: newField,
+								gameStatus: GameStatus.PLAYING,
+								startTime: get().startTime ?? Date.now(),
+							});
 						}
 					}
 				} else {
-					if (!tile.shown) newField[index] = { ...tile, flagged: !tile.flagged };
+					if (!tile.shown) {
+						newField[index] = { ...tile, flagged: !tile.flagged };
+						set({ field: newField });
+					}
 				}
-				set({ field: newField, gameStatus: 'playing' });
 			},
-			generateField: () => {
+
+			generateField: (safeIndex?: number) => {
 				const config = DIFFICULTY_CONFIG[get().difficulty];
+				const totalTiles = config.cols * config.rows;
 
-				// Этап 1 - создаем пустую конфигурацию поля
-				const generatedField: TileData[][] = Array.from({ length: config.rows }, () =>
-					Array.from({ length: config.cols }, () => ({
-						value: TileValue.EMPTY,
-						flagged: false,
-						shown: false,
-					})),
-				);
+				const generatedField: TileData[] = Array.from({ length: totalTiles }, () => ({
+					value: TileValue.EMPTY,
+					flagged: false,
+					shown: false,
+				}));
 
-				// Этап 2 - расставляем мины
-				const indexArray = Array.from({ length: config.cols * config.rows }, (_, index) => index);
-				let currentIndex = indexArray.length - 1;
+				const safeNeighbors = new Set<number>();
+				if (safeIndex !== undefined) {
+					safeNeighbors.add(safeIndex);
+					const neighbors = getNeighbors(safeIndex, config.cols, config.rows);
+					for (const ni of neighbors) {
+						safeNeighbors.add(ni);
+					}
+				}
 
+				const availableIndices: number[] = [];
+				for (let i = 0; i < totalTiles; i++) {
+					if (!safeNeighbors.has(i)) {
+						availableIndices.push(i);
+					}
+				}
+
+				let currentIndex = availableIndices.length - 1;
 				while (currentIndex > 0) {
 					const randomIndex = Math.floor(Math.random() * currentIndex);
 					currentIndex--;
-
-					[indexArray[currentIndex], indexArray[randomIndex]] = [
-						indexArray[randomIndex],
-						indexArray[currentIndex],
+					[availableIndices[currentIndex], availableIndices[randomIndex]] = [
+						availableIndices[randomIndex],
+						availableIndices[currentIndex],
 					];
 				}
 
-				for (let mine = 0; mine < config.mines; mine++) {
-					const mineIndex = indexArray[mine];
-					generatedField[Math.floor(mineIndex / config.cols)][mineIndex % config.cols].value =
-						TileValue.MINE;
+				const mineCount = Math.min(config.mines, availableIndices.length);
+				for (let mine = 0; mine < mineCount; mine++) {
+					generatedField[availableIndices[mine]].value = TileValue.MINE;
 				}
 
-				// Этап 3 - Вычисляем количество мин вокруг каждой не мины
 				for (let row = 0; row < config.rows; row++) {
 					for (let col = 0; col < config.cols; col++) {
-						if (generatedField[row][col].value === TileValue.MINE) continue;
-						let mineCount = 0;
-						// #Тот же уровень
-						// Слева
-						if (
-							generatedField[row][col - 1] &&
-							generatedField[row][col - 1].value === TileValue.MINE
-						)
-							mineCount++;
-						// Справа
-						if (
-							generatedField[row][col + 1] &&
-							generatedField[row][col + 1].value === TileValue.MINE
-						)
-							mineCount++;
-						// #Верхний уровень
-						if (generatedField[row - 1]) {
-							// Слева
-							if (
-								generatedField[row - 1][col - 1] &&
-								generatedField[row - 1][col - 1].value === TileValue.MINE
-							)
-								mineCount++;
-							// Справа
-							if (
-								generatedField[row - 1][col + 1] &&
-								generatedField[row - 1][col + 1].value === TileValue.MINE
-							)
-								mineCount++;
-							// Центр
-							if (
-								generatedField[row - 1][col] &&
-								generatedField[row - 1][col].value === TileValue.MINE
-							)
-								mineCount++;
-						}
+						const idx = row * config.cols + col;
+						if (generatedField[idx].value === TileValue.MINE) continue;
 
-						// #Нижний уровень
-						if (generatedField[row + 1]) {
-							// Слева
-							if (
-								generatedField[row + 1][col - 1] &&
-								generatedField[row + 1][col - 1].value === TileValue.MINE
-							)
-								mineCount++;
-							// Справа
-							if (
-								generatedField[row + 1][col + 1] &&
-								generatedField[row + 1][col + 1].value === TileValue.MINE
-							)
-								mineCount++;
-							// Центр
-							if (
-								generatedField[row + 1][col] &&
-								generatedField[row + 1][col].value === TileValue.MINE
-							)
-								mineCount++;
+						let count = 0;
+						const neighbors = getNeighbors(idx, config.cols, config.rows);
+						for (const ni of neighbors) {
+							if (generatedField[ni].value === TileValue.MINE) count++;
 						}
-
-						generatedField[row][col].value = TileValueByMineCount[mineCount];
+						generatedField[idx].value = TileValueByMineCount[count];
 					}
 				}
-				return set({ field: generatedField.flat(), gameStatus: 'playing' });
+
+				set({
+					field: generatedField,
+					gameStatus: GameStatus.PLAYING,
+					firstClickIndex: safeIndex ?? null,
+					startTime: Date.now(),
+				});
 			},
 		}),
-		{ name: 'game-config' },
+		{
+			name: 'game-config',
+			partialize: (state) => ({
+				difficulty: state.difficulty,
+			}),
+		},
 	),
 );

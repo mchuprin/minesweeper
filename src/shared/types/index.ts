@@ -1,11 +1,20 @@
-import type { DIFFICULTY } from '../../pages/game/constants';
-import type { ClickMode, GameStatus, TileValue } from '../constants';
+export type TileValueType =
+	| 'one'
+	| 'two'
+	| 'three'
+	| 'four'
+	| 'five'
+	| 'six'
+	| 'seven'
+	| 'eight'
+	| 'mine'
+	| 'flag'
+	| 'empty'
+	| 'wrongFlag';
 
-export type TileValueType = (typeof TileValue)[keyof typeof TileValue];
+export type Difficulty = 'small' | 'medium' | 'large';
 
-export type Difficulty = (typeof DIFFICULTY)[keyof typeof DIFFICULTY];
-
-export type GameStatus = (typeof GameStatus)[keyof typeof GameStatus];
+export type GameStatusType = 'idle' | 'playing' | 'won' | 'lost';
 
 export interface GameConfig {
 	rows: number;
@@ -21,16 +30,20 @@ export interface TileData {
 	wrongFlag?: boolean;
 }
 
-export type ClickMode = (typeof ClickMode)[keyof typeof ClickMode];
+export type ClickModeType = 'show' | 'flag';
 
 export type GameConfigState = {
-	clickMode: ClickMode;
+	clickMode: ClickModeType;
 	difficulty: Difficulty;
-	gameStatus: GameStatus;
+	gameStatus: GameStatusType;
 	field: TileData[];
-	checkTile: () => void;
+	startTime: number | null;
+	firstClickIndex: number | null;
+	checkTile: (index: number) => void;
 	toggleMode: () => void;
 	changeDifficulty: (newDif: Difficulty) => void;
-	generateField: () => void;
+	generateField: (safeIndex?: number) => void;
 	toggleTile: (index: number) => void;
+	getElapsedTime: () => number;
+	reset: () => void;
 };

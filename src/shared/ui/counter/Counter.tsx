@@ -1,5 +1,5 @@
-import { Digit } from '../digit/Digit';
-import { classNames } from '../../lib/classNames/classNames';
+import { Digit } from '@shared/ui';
+import { classNames } from '@shared/lib/classNames/classNames';
 import styles from './Counter.module.scss';
 
 interface CounterProps {
@@ -15,7 +15,7 @@ export const Counter = ({ value, digits = 3, className }: CounterProps) => {
 	return (
 		<div className={classNames(styles.counter, {}, [className])}>
 			{str.split('').map((char, i) => (
-				<Digit key={i} digit={Number(char)} />
+				<Digit key={char + i} digit={Number(char)} />
 			))}
 		</div>
 	);

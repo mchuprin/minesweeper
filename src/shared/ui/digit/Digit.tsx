@@ -1,4 +1,4 @@
-import { classNames } from '../../lib/classNames/classNames';
+import { classNames } from '@shared/lib/classNames/classNames';
 import styles from './Digit.module.scss';
 
 interface DigitProps {

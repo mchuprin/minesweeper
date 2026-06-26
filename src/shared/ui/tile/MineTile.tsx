@@ -1,15 +1,16 @@
-import { TileAssetsUrl, TileValue } from '../../constants';
-import { classNames } from '../../lib/classNames/classNames';
-import type { TileData, TileValueType } from '../../types';
+import { TileAssetsUrl, TileValue } from '@shared/constants';
+import { classNames } from '@shared/lib/classNames/classNames';
+import type { TileData, TileValueType } from '@shared/types';
 import styles from './MineTile.module.scss';
 
 interface MineTileProps {
 	data: TileData;
 	index: number;
 	onClick: () => void;
+	onContextMenu: () => void;
 }
 
-export const MineTile = ({ data, onClick }: MineTileProps) => {
+export const MineTile = ({ data, onClick, onContextMenu }: MineTileProps) => {
 	const mods = {
 		[styles.shown]: data.shown,
 		[styles.exploded]: data.exploded,
@@ -17,7 +18,15 @@ export const MineTile = ({ data, onClick }: MineTileProps) => {
 	};
 
 	return (
-		<button type="button" className={classNames(styles.tile, { ...mods }, [])} onClick={onClick}>
+		<button
+			type="button"
+			className={classNames(styles.tile, { ...mods }, [])}
+			onClick={onClick}
+			onContextMenu={(e) => {
+				e.preventDefault();
+				onContextMenu();
+			}}
+		>
 			{data.wrongFlag && <span className={styles.wrongFlagLine} />}
 			{data.flagged && !data.shown && !data.wrongFlag && <img src={TileAssetsUrl.flag} alt="" />}
 			{data.shown && (

@@ -1,61 +1,16 @@
 .page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    padding: 24px;
-    min-height: 100vh;
-    background: var(--tile-primary-color);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 24px;
+	min-height: 100vh;
+	background: var(--tile-primary-color);
 }
 
-.header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.resetBtn,
-.modeBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    background: var(--tile-primary-color);
-    border: solid 4px;
-    border-color: white var(--tile-secondary-color) var(--tile-secondary-color) white;
-    border-radius: 4px;
-    cursor: pointer;
-
-    &:active {
-        border-color: var(--tile-secondary-color) white white var(--tile-secondary-color);
-    }
-
-    &.disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    img {
-        width: 32px;
-        height: 32px;
-    }
-}
-
-.field {
-    display: grid;
-    gap: 0;
-}
-
-.small {
-    grid-template: repeat(9, var(--tile-size-l)) / repeat(9, var(--tile-size-l));
-}
-
-.medium {
-    grid-template: repeat(16, var(--tile-size-l)) / repeat(16, var(--tile-size-l));
-}
-
-.large {
-    grid-template: repeat(16, var(--tile-size-l)) / repeat(30, var(--tile-size-l));
+.widget {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
 }
